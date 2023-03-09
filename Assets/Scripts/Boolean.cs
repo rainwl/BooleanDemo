@@ -20,7 +20,7 @@ public class Boolean : MonoBehaviour
 
     //ObjParser dll
     Obj obj;
-    Mtl mtl;
+    Obj hj;
 
     //C++ dll
     float[] pSrcMeshVertices = null;
@@ -38,9 +38,12 @@ public class Boolean : MonoBehaviour
 
     List<float> pSrcVerticesList;
     List<uint> pSrcMeshFaceIndicesList;
+    List<float> pCutMeshVerticesList;
+    List<uint> pCutMeshFaceIndicesList;
+
     //ObjParser Write Path
     string objPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
-
+    string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
     #endregion
 
     #region C++ Dll Import
@@ -59,13 +62,18 @@ public class Boolean : MonoBehaviour
     #region Implement
     void Start()
     {
+        #region Init
         obj = new Obj();
+        hj = new Obj();
         obj.LoadObj(objPath);
+        hj.LoadObj(hjPath);
         pSrcVerticesList = new List<float>();
         pSrcMeshFaceIndicesList = new List<uint>();
-        
+        pCutMeshVerticesList = new List<float>();
+        pCutMeshFaceIndicesList = new List<uint>();
+        #endregion
 
-
+        #region SrcMesh data
         //float[] pSrcMeshVertices
         for (int i = 0; i < (uint)obj.VertexList.Count; i++)
         {
@@ -89,11 +97,34 @@ public class Boolean : MonoBehaviour
         //uint numSrcMeshFaces
         numSrcMeshFaces = (uint)obj.FaceList.Count;
 
+        #endregion
+
+        #region CutMesh data
+        //float[] pCutMeshVertices
+        for(int i = 0; i < (uint)hj.VertexList.Count; i++)
+        {
+            pCutMeshVerticesList.Add((float)hj.VertexList[i].X);
+            pCutMeshVerticesList.Add((float)hj.VertexList[i].Y);
+            pCutMeshVerticesList.Add((float)hj.VertexList[i].Z);
+        }
+        pCutMeshVertices = pCutMeshVerticesList.ToArray();
+        //uint[] pCutMeshFaceIndices
+        for(int i = 0;i < (uint)hj.FaceList.Count; i++)
+        {
+            int[] intArray = hj.FaceList[i].VertexIndexList;
+            uint[] uintArray = intArray.Select(jvalue => (uint)jvalue).ToArray();
+            pCutMeshFaceIndicesList.AddRange(uintArray);
+        }
+        pCutMeshFaceIndices = pCutMeshFaceIndicesList.ToArray();
+        //uint numCutMeshVertices
+        numCutMeshVertices = (uint)hj.VertexList.Count;
+        //uint numCutMeshFaces
+        numCutMeshFaces = (uint)hj.FaceList.Count;
 
 
-        //output
+        #endregion
 
-        //float[] pSrcMeshVertices no problem
+        #region output
         //for (int i = 0; i < pSrcMeshVertices.Length; i++)
         //{
         //    Debug.Log(pSrcMeshVertices[i]);
@@ -104,7 +135,30 @@ public class Boolean : MonoBehaviour
         //}
         //Debug.Log("numSrcMeshVertices" + numSrcMeshVertices);
         //Debug.Log("numSrcMeshFaces" + numSrcMeshFaces);
+        #endregion
+
+        #region IMP
+        var error = queryInfoNoUVs(pSrcMeshVertices, 
+            pSrcMeshFaceIndices,
+            numSrcMeshVertices,
+            numSrcMeshFaces,
+            pCutMeshVertices,
+            pCutMeshFaceIndices,
+            numCutMeshVertices,
+            numCutMeshFaces,
+            ref resultVerticesSize,
+            ref resultFaceIndicesSize
+            );
+        if ( error != 0 )
+        {
+            Debug.Log($"error:{error}");
+        }
+
+        float[] resultVerticesOut = new float[resultVerticesSize];
+        int[] resultFaceIndicesOut = new int[resultFaceIndicesSize];
+       
+        getBooleanResultNoUVs(resultVerticesOut, resultFaceIndicesOut);
+        #endregion
     }
     #endregion
 }
-
