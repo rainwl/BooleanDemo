@@ -42,8 +42,8 @@ public class Boolean : MonoBehaviour
     List<uint> pCutMeshFaceIndicesList;
 
     //ObjParser Write Path
-    string objPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
-    string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
+    string objPath = "D:\\Projects\\BooleanDemo\\Resource\\srcout2.obj";
+    string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\cutout2.obj";
     #endregion
 
     #region C++ Dll Import
@@ -87,7 +87,7 @@ public class Boolean : MonoBehaviour
         for (int i = 0; i < (uint)obj.FaceList.Count; i++)
         {
             int[] intArray = obj.FaceList[i].VertexIndexList;
-            uint[] uintArray = intArray.Select(j => (uint)j).ToArray();
+            uint[] uintArray = intArray.Select(j => (uint)j-1).ToArray();
             pSrcMeshFaceIndicesList.AddRange(uintArray);
         }
         pSrcMeshFaceIndices = pSrcMeshFaceIndicesList.ToArray();
@@ -112,7 +112,7 @@ public class Boolean : MonoBehaviour
         for(int i = 0;i < (uint)hj.FaceList.Count; i++)
         {
             int[] intArray = hj.FaceList[i].VertexIndexList;
-            uint[] uintArray = intArray.Select(jvalue => (uint)jvalue).ToArray();
+            uint[] uintArray = intArray.Select(jvalue => (uint)jvalue-1).ToArray();
             pCutMeshFaceIndicesList.AddRange(uintArray);
         }
         pCutMeshFaceIndices = pCutMeshFaceIndicesList.ToArray();
@@ -133,8 +133,19 @@ public class Boolean : MonoBehaviour
         //{
         //    Debug.Log(pSrcMeshFaceIndices[i]);
         //}
-        //Debug.Log("numSrcMeshVertices" + numSrcMeshVertices);
-        //Debug.Log("numSrcMeshFaces" + numSrcMeshFaces);
+        //Debug.Log("numSrcMeshVertices: " + numSrcMeshVertices);
+        //Debug.Log("numSrcMeshFaces: " + numSrcMeshFaces);
+        //Debug.Log("numCutMeshVertices: " + numCutMeshVertices);
+        //Debug.Log("numCutMeshFaces: " + numCutMeshFaces);
+        //for (int i = 0; i < pCutMeshVertices.Length; i++)
+        //{
+        //    Debug.Log(pCutMeshVertices[i]);
+        //}
+        //for (int i = 0; i < pCutMeshFaceIndices.Length; i++)
+        //{
+        //    Debug.Log(pCutMeshFaceIndices[i]);
+        //}
+
         #endregion
 
         #region IMP
