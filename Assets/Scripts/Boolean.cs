@@ -6,14 +6,13 @@ using ObjParser;
 using UnityEngine.UIElements;
 using System.Linq;
 using System;
+using System.IO;
 
 public class Boolean : MonoBehaviour
 {
     #region thinking
 
     //transformpoint,vertices trans,leftright,collider,同步环锯和Unity场景中的圆柱体,然后换掉,注意transform转换,然后再次写入到obj文件
-
-    //首先,通过ObjParser将本地obj的顶点数组读出来,面数组读出来,以及size
     #endregion
 
     #region Fields
@@ -45,6 +44,9 @@ public class Boolean : MonoBehaviour
     //ObjParser Write Path
     string objPath = "D:\\Projects\\BooleanDemo\\Resource\\srcout2.obj";
     string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\cutout2.obj";
+
+
+
     #endregion
 
     #region C++ Dll Import
@@ -72,6 +74,7 @@ public class Boolean : MonoBehaviour
         pSrcMeshFaceIndicesList = new List<uint>();
         pCutMeshVerticesList = new List<float>();
         pCutMeshFaceIndicesList = new List<uint>();
+
         #endregion
 
         #region SrcMesh data
@@ -122,52 +125,11 @@ public class Boolean : MonoBehaviour
         //uint numCutMeshFaces
         numCutMeshFaces = (uint)hj.FaceList.Count;
 
-
         #endregion
 
-        #region MeshSrc
-        //Generate Mesh from VerticesArray and FaceIndicesArray
-        Vector3[] vectorArraySrc = new Vector3[pSrcMeshVertices.Length / 3];
-        for (int i = 0; i < vectorArraySrc.Length; i++)
-        {
-            int j = i * 3;
-            vectorArraySrc[i] = new Vector3(pSrcMeshVertices[j], pSrcMeshVertices[j + 1], pSrcMeshVertices[j + 2]);
-        }
-        int[] intArraySrc = pSrcMeshFaceIndices.Select(i => (int)i).ToArray();
-        Mesh meshsrc = new Mesh();
-        meshsrc.vertices = vectorArraySrc;
-        meshsrc.triangles = intArraySrc;
-        meshsrc.RecalculateNormals();
-        GameObject src = new GameObject();
-        src.name = "src";
-        MeshFilter meshFiltersrc = src.AddComponent<MeshFilter>();
-        MeshRenderer meshrenderersrc = src.AddComponent<MeshRenderer>();
-        Material materialsrc = new Material(Shader.Find("Standard"));
-        materialsrc.color = Color.blue;
-        meshFiltersrc.mesh = meshsrc;
-        meshrenderersrc.material = materialsrc;
-        #endregion
-
-        #region MeshCut
-        Vector3[] vectorArrayCut = new Vector3[pCutMeshVertices.Length / 3];
-        for (int i = 0; i < vectorArrayCut.Length; i++)
-        {
-            int j = i * 3;
-            vectorArrayCut[i] = new Vector3(pCutMeshVertices[j], pCutMeshVertices[j + 1], pCutMeshVertices[j + 2]);
-        }
-        int[] intArrayCut = pCutMeshFaceIndices.Select(i => (int)i).ToArray();
-        Mesh meshcut = new Mesh();
-        meshcut.vertices = vectorArrayCut;
-        meshcut.triangles = intArrayCut;
-        meshcut.RecalculateNormals();
-        GameObject cut = new GameObject();
-        cut.name = "cut";
-        MeshFilter meshFiltercut = cut.AddComponent<MeshFilter>();
-        MeshRenderer meshrenderercut = cut.AddComponent<MeshRenderer>();
-        Material materialcut = new Material(Shader.Find("Standard"));
-        materialcut.color = Color.green;
-        meshFiltercut.mesh = meshcut;
-        meshrenderercut.material = materialcut;
+        #region MeshVisual
+        GenerateMesh(pSrcMeshVertices, pSrcMeshFaceIndices, "src", Color.blue);
+        GenerateMesh(pCutMeshVertices, pCutMeshFaceIndices, "cut", Color.green);
         #endregion
 
         #region output
@@ -217,56 +179,168 @@ public class Boolean : MonoBehaviour
 
         getBooleanResultNoUVs(resultVerticesOut, resultFaceIndicesOut);
 
-        #endregion
+        //Visual Result
+        uint[] intArraySrc = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
+        GenerateMesh(resultVerticesOut, intArraySrc, "result", Color.yellow);
 
-        #region MeshResult
-        Vector3[] vectorArrayresult = new Vector3[resultVerticesOut.Length / 3];
-        for (int i = 0; i < vectorArrayresult.Length; i++)
-        {
-            int j = i * 3;
-            vectorArrayresult[i] = new Vector3(resultVerticesOut[j], resultVerticesOut[j + 1], resultVerticesOut[j + 2]);
-        }
-        //int[] intArrayresult = resultFaceIndicesOut.Select(i => (int)i).ToArray();
-        Mesh meshresult = new Mesh();
-        meshresult.vertices = vectorArrayresult;
-        meshresult.triangles = resultFaceIndicesOut;
-        meshresult.RecalculateNormals();
-        GameObject result = new GameObject();
-        result.name = "result";
-        MeshFilter meshFilterresult = result.AddComponent<MeshFilter>();
-        MeshRenderer meshrendererresult = result.AddComponent<MeshRenderer>();
-        Material materialresult = new Material(Shader.Find("Standard"));
-        materialresult.color = Color.red;
-        meshFilterresult.mesh = meshresult;
-        meshrendererresult.material = materialresult;
         #endregion
 
         #region WriteObj
-        string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\generateobj.obj";
-        string[] headers = new string[] { "ObjRain" };
-        string[] objFile = new string[resultVerticesOut.Length];
+        string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\generate.obj";
 
-        Vector3[] vectorArrayFaceresult = new Vector3[resultFaceIndicesOut.Length / 3];
-        for (int i = 0; i < vectorArrayFaceresult.Length; i++)
+        using (StreamWriter writer = new StreamWriter(writeobjpath))
         {
-            int j = i * 3;
-            vectorArrayFaceresult[i] = new Vector3(resultFaceIndicesOut[j], resultFaceIndicesOut[j + 1], resultFaceIndicesOut[j + 2]);
+            WriteFloatArrayToStram(resultVerticesOut, writer);
+            WriteIntArrayToStream(resultFaceIndicesOut, writer);
         }
-        for (int i = 1; i < vectorArrayresult.Length+1; i++)
-        {
-            objFile[i] = "v " + vectorArrayresult[i].x + vectorArrayresult[i].y + vectorArrayresult[i].z;
-        }
-        for (int i = vectorArrayresult.Length+1; i < objFile.Length+2; i++)
-        {
-            objFile[i] = "f " + vectorArrayFaceresult[i].x + vectorArrayFaceresult[i].y + vectorArrayFaceresult[i].z;
-        }
-        resultobj = new Obj();
-        //obj.LoadObj(objFile);
-        obj.WriteObjFile(writeobjpath, headers);
-        
         #endregion
 
     }
+    void Update()
+    {
+        #region MoveCut
+        //if Get Space Down,boolean according to the new position
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            GameObject obj = GameObject.Find("cut");
+            MeshFilter meshfilterobj = obj.GetComponent<MeshFilter>();
+            Mesh meshobj = new Mesh();
+            meshobj = meshfilterobj.mesh;
+            Vector3[] vector3verticesobj = meshobj.vertices;
+            int[] intfaceobj = meshobj.triangles;
+            uint[] uintArray = intfaceobj.Select(j => (uint)j).ToArray();
+
+            float[] objvertices = vector3verticesobj.SelectMany(v => new float[] { v.x, v.y, v.z }).ToArray();
+            uint facesize = (uint)meshobj.triangles.Count();
+            uint vertexsize = (uint)meshobj.vertexCount;
+
+            int newsultverticesSize = 0;
+            int newsultfacesSize = 0;
+            var error = queryInfoNoUVs(pSrcMeshVertices,
+                                       pSrcMeshFaceIndices,
+                                       numSrcMeshVertices,
+                                       numSrcMeshFaces,
+                                       objvertices,
+                                       uintArray,
+                                       vertexsize,
+                                       facesize,
+                                       ref newsultverticesSize,
+                                       ref newsultfacesSize
+                                       );
+            if (error != 0)
+            {
+                Debug.Log($"error:{error}");
+            }
+
+            float[] newresultVerticesOut = new float[newsultverticesSize];
+            int[] newresultFaceIndicesOut = new int[newsultfacesSize];
+            getBooleanResultNoUVs(newresultVerticesOut, newresultFaceIndicesOut);
+
+
+            Vector3[] vectorArrayresult = new Vector3[newresultVerticesOut.Length / 3];
+            for (int i = 0; i < vectorArrayresult.Length; i++)
+            {
+                int j = i * 3;
+                vectorArrayresult[i] = new Vector3(newresultVerticesOut[j], newresultVerticesOut[j + 1], newresultVerticesOut[j + 2]);
+            }
+            //int[] intArrayresult = resultFaceIndicesOut.Select(i => (int)i).ToArray();
+            Mesh meshresult = new Mesh();
+            meshresult.vertices = vectorArrayresult;
+            meshresult.triangles = newresultFaceIndicesOut;
+            meshresult.RecalculateNormals();
+            GameObject result = new GameObject();
+            result.name = "newresult";
+            MeshFilter meshFilterresult = result.AddComponent<MeshFilter>();
+            MeshRenderer meshrendererresult = result.AddComponent<MeshRenderer>();
+            Material materialresult = new Material(Shader.Find("Standard"));
+            materialresult.color = Color.white;
+            meshFilterresult.mesh = meshresult;
+            meshrendererresult.material = materialresult;
+        }
+
+
+        #endregion
+    }
+
+    #region WriteArrayToStream
+    void WriteFloatArrayToStram(float[] array, StreamWriter sw)
+    {
+        for (int i = 0; i < array.Length; i += 3)
+        {
+            if (i + 2 < array.Length)
+            {
+                sw.WriteLine("v {0} {1} {2}", array[i], array[i + 1], array[i + 2]);
+            }
+            //else if (i + 1 < array.Length)
+            //{
+            //    sw.WriteLine("v {0} {1}", array[i], array[i + 1]);
+            //}
+            //else
+            //{
+            //    sw.WriteLine("v {0}", array[i]);
+            //}
+        }
+    }
+    void WriteIntArrayToStream(int[] array, StreamWriter sw)
+    {
+        for (int i = 0; i < array.Length; i += 3)
+        {
+            if (i + 2 < array.Length)
+            {
+                sw.WriteLine("f {0} {1} {2} ", array[i], array[i + 1], array[i + 2]);
+                //if (array[i] == array[i + 1] || array[i] == array[i + 2] || array[i + 1] == array[i + 2])
+                //{
+                //    Debug.Log($"{array[i]} {array[i+1]} {array[i+2]}");
+                //}
+            }
+            //else if (i + 1 < array.Length)
+            //{
+            //    sw.WriteLine("f {0} {1} ", array[i], array[i + 1]);
+            //}
+            //else
+            //{
+            //    sw.WriteLine("f {0} ", array[i]);
+            //}
+        }
+    }
+
+    #endregion
+
+    #region GenerateMesh
+    /// <summary>
+    /// Generate Mesh from VerticesArray and FaceIndicesArray
+    /// </summary>
+    /// <param name="VerticesArray"></param>
+    /// <param name="FaceIndicesArray"></param>
+    /// <param name="name"></param>
+    /// <param name="meshcolor"></param>
+    void GenerateMesh(float[] VerticesArray, uint[] FaceIndicesArray, string name, Color meshcolor)
+    {
+        Vector3[] vectorArrayresult = new Vector3[VerticesArray.Length / 3];
+        for (int i = 0; i < vectorArrayresult.Length; i++)
+        {
+            int j = i * 3;
+            vectorArrayresult[i] = new Vector3(VerticesArray[j], VerticesArray[j + 1], VerticesArray[j + 2]);
+        }
+        //int[] intArrayresult = resultFaceIndicesOut.Select(i => (int)i).ToArray();
+        int[] intArraySrc = FaceIndicesArray.Select(i => (int)i).ToArray();
+
+        Mesh meshresult = new Mesh();
+        meshresult.vertices = vectorArrayresult;
+        meshresult.triangles = intArraySrc;
+        meshresult.RecalculateNormals();
+
+        GameObject result = new GameObject();
+        result.name = name;
+        MeshFilter meshFilterresult = result.AddComponent<MeshFilter>();
+        MeshRenderer meshrendererresult = result.AddComponent<MeshRenderer>();
+        Material materialresult = new Material(Shader.Find("Standard"));
+        materialresult.color = meshcolor;
+        meshFilterresult.mesh = meshresult;
+        meshrendererresult.material = materialresult;
+    }
+
+    #endregion
 
     #endregion
 }
