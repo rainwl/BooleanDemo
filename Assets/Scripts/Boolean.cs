@@ -190,7 +190,7 @@ public class Boolean : MonoBehaviour
 
         using (StreamWriter writer = new StreamWriter(writeobjpath))
         {
-            WriteFloatArrayToStram(resultVerticesOut, writer);
+            WriteFloatArrayToStream(resultVerticesOut, writer);
             WriteIntArrayToStream(resultFaceIndicesOut, writer);
         }
         #endregion
@@ -257,13 +257,99 @@ public class Boolean : MonoBehaviour
             meshFilterresult.mesh = meshresult;
             meshrendererresult.material = materialresult;
         }
+        //if Get Key.H down,boolean accoring to the new pos.
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            //手动拖动Hierarchy中的cut到一个新的位置,
+            //然后获取此时cut的新位置,
+            //此时是否需要转换成右手坐标系
+            //得到此时的cut的网格的顶点和面片索引信息
+            //然后依次新的信息和src进行bool操作,生成新的mesh并可视化
 
+            #region NewPos
+            GameObject go = GameObject.Find("cut");
+            Mesh mesh = go.GetComponent<MeshFilter>().mesh;
+            Transform transform = go.GetComponent<Transform>();
+            Vector3[] vertices = mesh.vertices;
+            //Convert to right-hand coordinate system
+            //for (int i = 0; i < vertices.Length; i++)
+            //{
+            //    // 将X坐标乘以-1并进行旋转
+            //    vertices[i] = transform.TransformPoint(new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z));              
+            //}
+            for (int i = 0; i < vertices.Length; i++)
+            {               
+                vertices[i] = transform.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
+            }
+
+            float[] verticesArray = new float[vertices.Length * 3];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                verticesArray[i * 3] = vertices[i].x;
+                verticesArray[i * 3 + 1] = vertices[i].y;
+                verticesArray[i * 3 + 2] = vertices[i].z;
+            }
+
+            int[] triangles = mesh.triangles;
+            //Convert to right-hand coordinate system
+            //for (int i = 0; i < triangles.Length; i += 3)
+            //{
+            //    // 交换第二个和第三个索引
+            //    int temp = triangles[i + 1];
+            //    triangles[i + 1] = triangles[i + 2];
+            //    triangles[i + 2] = temp;
+            //}
+            uint[] uinttriArray = triangles.Select(i => (uint)i).ToArray();
+
+            uint vertexCount = (uint)mesh.vertexCount;
+            uint triangleCount = (uint)mesh.triangles.Length / 3;
+            GenerateMesh(verticesArray, uinttriArray, "new cut", Color.white);
+            #endregion
+
+
+            #region Bool and Visual
+            int newVerticesSize = 0;
+            int newFaceIndicesSize = 0;
+
+            var error = queryInfoNoUVs(pSrcMeshVertices,
+            pSrcMeshFaceIndices,
+            numSrcMeshVertices,
+            numSrcMeshFaces,
+            verticesArray,
+            uinttriArray,
+            vertexCount,
+            triangleCount,
+            ref newVerticesSize,
+            ref newFaceIndicesSize
+            );
+            if (error != 0)
+            {
+                Debug.Log($"error:{error}");
+            }
+
+            float[] newVerticesSizeOut = new float[newVerticesSize];
+            int[] newFaceIndicesSizeOut = new int[newFaceIndicesSize];
+
+            getBooleanResultNoUVs(newVerticesSizeOut, newFaceIndicesSizeOut);
+
+            //Visual Result
+            uint[] intArraySrc = newFaceIndicesSizeOut.Select(i => (uint)i).ToArray();
+            GenerateMesh(newVerticesSizeOut, intArraySrc, "new result", Color.red);
+
+            #endregion
+
+
+        }
 
         #endregion
     }
 
-    #region WriteArrayToStream
-    void WriteFloatArrayToStram(float[] array, StreamWriter sw)
+    /// <summary>
+    /// Write Float[] into Obj
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="sw"></param>
+    void WriteFloatArrayToStream(float[] array, StreamWriter sw)
     {
         for (int i = 0; i < array.Length; i += 3)
         {
@@ -281,6 +367,11 @@ public class Boolean : MonoBehaviour
             //}
         }
     }
+    /// <summary>
+    /// Write int[] into Obj
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="sw"></param>
     void WriteIntArrayToStream(int[] array, StreamWriter sw)
     {
         for (int i = 0; i < array.Length; i += 3)
@@ -303,10 +394,6 @@ public class Boolean : MonoBehaviour
             //}
         }
     }
-
-    #endregion
-
-    #region GenerateMesh
     /// <summary>
     /// Generate Mesh from VerticesArray and FaceIndicesArray
     /// </summary>
@@ -340,7 +427,6 @@ public class Boolean : MonoBehaviour
         meshrendererresult.material = materialresult;
     }
 
-    #endregion
 
     #endregion
 }
