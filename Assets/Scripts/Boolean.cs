@@ -344,14 +344,22 @@ public class Boolean : MonoBehaviour
             resultFaceIndicesOut = new int[resultFaceIndicesSize];
 
             getBooleanResultNoUVs(resultVerticesOut, resultFaceIndicesOut);
-            
-            
+
+
             numVerticesOut = (uint)resultVerticesOut.Length / 3;
             numTrianglesOut = (uint)resultFaceIndicesOut.Length / 3;
-            
+
             //Visual Result
             resultTrianglesOut = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
             GenerateMesh(resultVerticesOut, resultTrianglesOut, "new result", Color.red);
+
+            string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\result.obj";
+
+            using (StreamWriter writer = new StreamWriter(writeobjpath))
+            {
+                WriteFloatArrayToStream(resultVerticesOut, writer);
+                WriteIntArrayToStream(resultFaceIndicesOut, writer);
+            }
 
             #endregion
 
@@ -393,7 +401,7 @@ public class Boolean : MonoBehaviour
         {
             if (i + 2 < array.Length)
             {
-                sw.WriteLine("f {0} {1} {2} ", array[i], array[i + 1], array[i + 2]);
+                sw.WriteLine("f {0} {1} {2} ", array[i] + 1, array[i + 1] + 1, array[i + 2] + 1);
                 //if (array[i] == array[i + 1] || array[i] == array[i + 2] || array[i + 1] == array[i + 2])
                 //{
                 //    Debug.Log($"{array[i]} {array[i+1]} {array[i+2]}");
