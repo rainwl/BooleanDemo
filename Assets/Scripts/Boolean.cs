@@ -10,17 +10,11 @@ using System.IO;
 
 public class Boolean : MonoBehaviour
 {
-    #region thinking
-
-    //transformpoint,vertices trans,leftright,collider,同步环锯和Unity场景中的圆柱体,然后换掉,注意transform转换,然后再次写入到obj文件
-    #endregion
-
     #region Fields
 
     //ObjParser dll
     Obj obj;
     Obj hj;
-    Obj resultobj;
 
     //C++ dll
     float[] pSrcMeshVertices = null;
@@ -33,8 +27,14 @@ public class Boolean : MonoBehaviour
     uint numCutMeshVertices;
     uint numCutMeshFaces;
 
+    //result
     int resultVerticesSize;
     int resultFaceIndicesSize;
+    float[] resultVerticesOut;
+    int[] resultFaceIndicesOut;
+    uint[] resultTrianglesOut;
+    uint numVerticesOut;
+    uint numTrianglesOut;
 
     List<float> pSrcVerticesList;
     List<uint> pSrcMeshFaceIndicesList;
@@ -174,14 +174,18 @@ public class Boolean : MonoBehaviour
         }
 
 
-        float[] resultVerticesOut = new float[resultVerticesSize];
-        int[] resultFaceIndicesOut = new int[resultFaceIndicesSize];
+        resultVerticesOut = new float[resultVerticesSize];
+        resultFaceIndicesOut = new int[resultFaceIndicesSize];
+
 
         getBooleanResultNoUVs(resultVerticesOut, resultFaceIndicesOut);
 
+        numVerticesOut = (uint)resultVerticesOut.Length / 3;
+        numTrianglesOut = (uint)resultFaceIndicesOut.Length / 3;
+
         //Visual Result
-        uint[] intArraySrc = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
-        GenerateMesh(resultVerticesOut, intArraySrc, "result", Color.yellow);
+        resultTrianglesOut = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
+        GenerateMesh(resultVerticesOut, resultTrianglesOut, "result", Color.yellow);
 
         #endregion
 
@@ -199,86 +203,23 @@ public class Boolean : MonoBehaviour
     void Update()
     {
         #region MoveCut
-        //if Get Space Down,boolean according to the new position
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            GameObject obj = GameObject.Find("cut");
-            MeshFilter meshfilterobj = obj.GetComponent<MeshFilter>();
-            Mesh meshobj = new Mesh();
-            meshobj = meshfilterobj.mesh;
-            Vector3[] vector3verticesobj = meshobj.vertices;
-            int[] intfaceobj = meshobj.triangles;
-            uint[] uintArray = intfaceobj.Select(j => (uint)j).ToArray();
 
-            float[] objvertices = vector3verticesobj.SelectMany(v => new float[] { v.x, v.y, v.z }).ToArray();
-            uint facesize = (uint)meshobj.triangles.Count();
-            uint vertexsize = (uint)meshobj.vertexCount;
-
-            int newsultverticesSize = 0;
-            int newsultfacesSize = 0;
-            var error = queryInfoNoUVs(pSrcMeshVertices,
-                                       pSrcMeshFaceIndices,
-                                       numSrcMeshVertices,
-                                       numSrcMeshFaces,
-                                       objvertices,
-                                       uintArray,
-                                       vertexsize,
-                                       facesize,
-                                       ref newsultverticesSize,
-                                       ref newsultfacesSize
-                                       );
-            if (error != 0)
-            {
-                Debug.Log($"error:{error}");
-            }
-
-            float[] newresultVerticesOut = new float[newsultverticesSize];
-            int[] newresultFaceIndicesOut = new int[newsultfacesSize];
-            getBooleanResultNoUVs(newresultVerticesOut, newresultFaceIndicesOut);
-
-
-            Vector3[] vectorArrayresult = new Vector3[newresultVerticesOut.Length / 3];
-            for (int i = 0; i < vectorArrayresult.Length; i++)
-            {
-                int j = i * 3;
-                vectorArrayresult[i] = new Vector3(newresultVerticesOut[j], newresultVerticesOut[j + 1], newresultVerticesOut[j + 2]);
-            }
-            //int[] intArrayresult = resultFaceIndicesOut.Select(i => (int)i).ToArray();
-            Mesh meshresult = new Mesh();
-            meshresult.vertices = vectorArrayresult;
-            meshresult.triangles = newresultFaceIndicesOut;
-            meshresult.RecalculateNormals();
-            GameObject result = new GameObject();
-            result.name = "newresult";
-            MeshFilter meshFilterresult = result.AddComponent<MeshFilter>();
-            MeshRenderer meshrendererresult = result.AddComponent<MeshRenderer>();
-            Material materialresult = new Material(Shader.Find("Standard"));
-            materialresult.color = Color.white;
-            meshFilterresult.mesh = meshresult;
-            meshrendererresult.material = materialresult;
-        }
         //if Get Key.H down,boolean accoring to the new pos.
         if (Input.GetKeyDown(KeyCode.H))
         {
-            //手动拖动Hierarchy中的cut到一个新的位置,
-            //然后获取此时cut的新位置,
-            //此时是否需要转换成右手坐标系
-            //得到此时的cut的网格的顶点和面片索引信息
-            //然后依次新的信息和src进行bool操作,生成新的mesh并可视化
-
             #region NewPos
             GameObject go = GameObject.Find("cut");
             Mesh mesh = go.GetComponent<MeshFilter>().mesh;
             Transform transform = go.GetComponent<Transform>();
             Vector3[] vertices = mesh.vertices;
-            //Convert to right-hand coordinate system
+            ///Convert to right-hand coordinate system
             //for (int i = 0; i < vertices.Length; i++)
             //{
-            //    // 将X坐标乘以-1并进行旋转
+            //    // Multiply the X coordinate by - 1 and rotate
             //    vertices[i] = transform.TransformPoint(new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z));              
             //}
             for (int i = 0; i < vertices.Length; i++)
-            {               
+            {
                 vertices[i] = transform.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
             }
 
@@ -305,7 +246,6 @@ public class Boolean : MonoBehaviour
             uint triangleCount = (uint)mesh.triangles.Length / 3;
             GenerateMesh(verticesArray, uinttriArray, "new cut", Color.white);
             #endregion
-
 
             #region Bool and Visual
             int newVerticesSize = 0;
@@ -338,9 +278,84 @@ public class Boolean : MonoBehaviour
 
             #endregion
 
+        }
+        //if Get Key.Space down,Continuous Boolean
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            #region NewPos
+            GameObject go = GameObject.Find("cut");
+            Mesh mesh = go.GetComponent<MeshFilter>().mesh;
+            Transform transform = go.GetComponent<Transform>();
+            Vector3[] vertices = mesh.vertices;
+            ///Convert to right-hand coordinate system
+            //for (int i = 0; i < vertices.Length; i++)
+            //{
+            //    // Multiply the X coordinate by - 1 and rotate
+            //    vertices[i] = transform.TransformPoint(new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z));              
+            //}
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = transform.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
+            }
+
+            float[] verticesArray = new float[vertices.Length * 3];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                verticesArray[i * 3] = vertices[i].x;
+                verticesArray[i * 3 + 1] = vertices[i].y;
+                verticesArray[i * 3 + 2] = vertices[i].z;
+            }
+
+            int[] triangles = mesh.triangles;
+            //Convert to right-hand coordinate system
+            //for (int i = 0; i < triangles.Length; i += 3)
+            //{
+            //    // 交换第二个和第三个索引
+            //    int temp = triangles[i + 1];
+            //    triangles[i + 1] = triangles[i + 2];
+            //    triangles[i + 2] = temp;
+            //}
+            uint[] uinttriArray = triangles.Select(i => (uint)i).ToArray();
+
+            uint vertexCount = (uint)mesh.vertexCount;
+            uint triangleCount = (uint)mesh.triangles.Length / 3;
+            GenerateMesh(verticesArray, uinttriArray, "new cut", Color.white);
+            #endregion
+
+            #region Bool and Visual
+
+            var error = queryInfoNoUVs(resultVerticesOut,
+            resultTrianglesOut,
+            numVerticesOut,
+            numTrianglesOut,
+            verticesArray,
+            uinttriArray,
+            vertexCount,
+            triangleCount,
+            ref resultVerticesSize,
+            ref resultFaceIndicesSize
+            );
+            if (error != 0)
+            {
+                Debug.Log($"error:{error}");
+            }
+
+            resultVerticesOut = new float[resultVerticesSize];
+            resultFaceIndicesOut = new int[resultFaceIndicesSize];
+
+            getBooleanResultNoUVs(resultVerticesOut, resultFaceIndicesOut);
+            
+            
+            numVerticesOut = (uint)resultVerticesOut.Length / 3;
+            numTrianglesOut = (uint)resultFaceIndicesOut.Length / 3;
+            
+            //Visual Result
+            resultTrianglesOut = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
+            GenerateMesh(resultVerticesOut, resultTrianglesOut, "new result", Color.red);
+
+            #endregion
 
         }
-
         #endregion
     }
 
