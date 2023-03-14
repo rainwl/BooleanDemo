@@ -19,7 +19,7 @@ public class UnityObjBool : MonoBehaviour
     uint[] A_TrianglesArray = null;
     uint A_VerticesSize;
     uint A_TrianglesSize;
-    int[] A_TriganlesIntArray = null;
+
     //B data
     float[] B_VerticesArray = null;
     uint[] B_TrianglesArray = null;
@@ -29,23 +29,20 @@ public class UnityObjBool : MonoBehaviour
     //result
     int resultVerticesSize;
     int resultTrianglesSize;
-
     float[] resultVerticesOutArray;
     int[] resultTrianglesOutArray;
 
-    uint[] unsignedresultTrianglesOutArray;
-    uint numVerticesOut;
-    uint numTrianglesOut;
-
+    //temp List
     List<float> A_VerticesList;
     List<uint> A_TrianglesList;
     List<float> B_VerticesList;
     List<uint> B_TrianglesList;
 
+    //Path
     string objAPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
     string ObjBPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
     string ObjCPath = "D:\\Projects\\BooleanDemo\\Resource\\C.obj";
-    string writeNewBPath = "D:\\Projects\\BooleanDemo\\Resource\\trepan.obj";
+    //string writeNewBPath = "D:\\Projects\\BooleanDemo\\Resource\\trepan.obj";
     Transform UnityBTransform;
 
     string BName = "B_";
@@ -70,7 +67,6 @@ public class UnityObjBool : MonoBehaviour
     /// </summary>
     void Start()
     {
-
         #region Init
 
         obj_A = new Obj();
@@ -98,16 +94,14 @@ public class UnityObjBool : MonoBehaviour
         for (int i = 0; i < (uint)obj_A.FaceList.Count; i++)
         {
             int[] intArray = obj_A.FaceList[i].VertexIndexList;
-            //这里为什么-1,因为C++那边的值是-1的?
             uint[] uintArray = intArray.Select(j => (uint)j - 1).ToArray();
-
             A_TrianglesList.AddRange(uintArray);
         }
         A_TrianglesArray = A_TrianglesList.ToArray();
         A_VerticesSize = (uint)obj_A.VertexList.Count;
         A_TrianglesSize = (uint)obj_A.FaceList.Count;
 
-        Common.GenerateMesh(A_VerticesArray, A_TrianglesArray, "A_obj", Color.red);
+        //Common.GenerateMesh(A_VerticesArray, A_TrianglesArray, "A_obj", Color.red);
         #endregion
 
         #region B Mesh data
@@ -128,14 +122,12 @@ public class UnityObjBool : MonoBehaviour
         B_VerticesSize = (uint)obj_B.VertexList.Count;
         B_TrianglesSize = (uint)obj_B.FaceList.Count;
 
-        Common.GenerateMesh(B_VerticesArray, B_TrianglesArray, "B_obj", Color.red);
+        //Common.GenerateMesh(B_VerticesArray, B_TrianglesArray, "B_obj", Color.red);
         #endregion
-
     }
 
     void Update()
     {
-
         #region Matrix4x4
         Matrix4x4 matrix = Matrix4x4.TRS(UnityBTransform.position, UnityBTransform.rotation, Vector3.one);
 
@@ -171,13 +163,12 @@ public class UnityObjBool : MonoBehaviour
         }
         #endregion
 
-        #region Generate new B Mesh and Write B's new Obj into the file
+        #region Continuous Boolean
         if (Input.GetKeyDown(KeyCode.Space))
         {
             //Generate new B Mesh and Write its Obj into the file
             Common.GenerateMesh(B_VerticesArray, B_TrianglesArray, BName + BIndex.ToString(), Color.green);
             //Common.WriteObj(writeNewBPath, B_VerticesArray, B_TrianglesArray);
-
 
             //Boolean and Write result obj into the file
             var error = queryInfoNoUVs(A_VerticesArray, A_TrianglesArray, A_VerticesSize, A_TrianglesSize,
@@ -188,24 +179,17 @@ public class UnityObjBool : MonoBehaviour
             resultVerticesOutArray = new float[resultVerticesSize];
             resultTrianglesOutArray = new int[resultTrianglesSize];
 
-            //A_TriganlesIntArray = A_TrianglesArray.Select(i => (int)i).ToArray();
-
             getBooleanResultNoUVs(resultVerticesOutArray, resultTrianglesOutArray);
-            Common.GenerateMesh(resultVerticesOutArray, resultTrianglesOutArray, "C" + BIndex, Color.yellow);
+            Common.GenerateMesh(resultVerticesOutArray, resultTrianglesOutArray, "C", Color.yellow);
             Common.WriteObj(ObjCPath, resultVerticesOutArray, resultTrianglesOutArray);
             BIndex++;
 
             A_VerticesArray = resultVerticesOutArray;
             A_TrianglesArray = resultTrianglesOutArray.Select(i => (uint)i).ToArray();
-            A_VerticesSize = (uint)resultVerticesSize /3;
-            A_TrianglesSize = (uint)resultTrianglesSize /3;
-
-            string temppath = "D:\\Projects\\BooleanDemo\\Resource\\temp.obj";
-            Common.WriteObj(temppath, A_VerticesArray, A_TrianglesArray);
+            A_VerticesSize = (uint)resultVerticesSize / 3;
+            A_TrianglesSize = (uint)resultTrianglesSize / 3;
         }
         #endregion
-
-
     }
 
 }
