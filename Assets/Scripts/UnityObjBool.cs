@@ -174,20 +174,26 @@ public class UnityObjBool : MonoBehaviour
             var error = queryInfoNoUVs(A_VerticesArray, A_TrianglesArray, A_VerticesSize, A_TrianglesSize,
                                        B_VerticesArray, B_TrianglesArray, B_VerticesSize, B_TrianglesSize,
                                        ref resultVerticesSize, ref resultTrianglesSize);
-            if (error != 0) Debug.Log($"error:{error}");
+            if (error != 0)
+            {
+                Debug.Log($"error:{error}");
+            }
+            else
+            {
+                resultVerticesOutArray = new float[resultVerticesSize];
+                resultTrianglesOutArray = new int[resultTrianglesSize];
 
-            resultVerticesOutArray = new float[resultVerticesSize];
-            resultTrianglesOutArray = new int[resultTrianglesSize];
+                getBooleanResultNoUVs(resultVerticesOutArray, resultTrianglesOutArray);
+                Common.GenerateMesh(resultVerticesOutArray, resultTrianglesOutArray, "C", Color.yellow);
+                Common.WriteObj(ObjCPath, resultVerticesOutArray, resultTrianglesOutArray);
+                BIndex++;
 
-            getBooleanResultNoUVs(resultVerticesOutArray, resultTrianglesOutArray);
-            Common.GenerateMesh(resultVerticesOutArray, resultTrianglesOutArray, "C", Color.yellow);
-            Common.WriteObj(ObjCPath, resultVerticesOutArray, resultTrianglesOutArray);
-            BIndex++;
-
-            A_VerticesArray = resultVerticesOutArray;
-            A_TrianglesArray = resultTrianglesOutArray.Select(i => (uint)i).ToArray();
-            A_VerticesSize = (uint)resultVerticesSize / 3;
-            A_TrianglesSize = (uint)resultTrianglesSize / 3;
+                A_VerticesArray = resultVerticesOutArray;
+                A_TrianglesArray = resultTrianglesOutArray.Select(i => (uint)i).ToArray();
+                A_VerticesSize = (uint)resultVerticesSize / 3;
+                A_TrianglesSize = (uint)resultTrianglesSize / 3;
+            }
+                
         }
         #endregion
     }
