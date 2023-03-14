@@ -10,39 +10,45 @@ using UnityEngine;
 public class UnityObjBool : MonoBehaviour
 {
     #region Fields
-    Obj obj;
-    Obj trepan;
-    //Src data
-    float[] pSrcMeshVertices = null;
-    uint[] pSrcMeshFaceIndices = null;
-    uint numSrcMeshVertices;
-    uint numSrcMeshFaces;
-    //Cut data
-    float[] pCutMeshVertices = null;
-    uint[] pCutMeshFaceIndices = null;
-    uint numCutMeshVertices;
-    uint numCutMeshFaces;
+
+    Obj obj_A;
+    Obj obj_B;
+
+    //A data
+    float[] A_VerticesArray = null;
+    uint[] A_TrianglesArray = null;
+    uint A_VerticesSize;
+    uint A_TrianglesSize;
+
+    //B data
+    float[] B_VerticesArray = null;
+    uint[] B_TrianglesArray = null;
+    uint B_VerticesSize;
+    uint B_TrianglesSize;
 
     //result
     int resultVerticesSize;
-    int resultFaceIndicesSize;
-    float[] resultVerticesOut;
-    int[] resultFaceIndicesOut;
-    uint[] resultTrianglesOut;
+    int resultTrianglesSize;
+
+    float[] resultVerticesOutArray;
+    int[] resultTrianglesOutArray;
+
+    uint[] unsignedresultTrianglesOutArray;
     uint numVerticesOut;
     uint numTrianglesOut;
 
-    List<float> pSrcVerticesList;
-    List<uint> pSrcMeshFaceIndicesList;
-    List<float> pCutMeshVerticesList;
-    List<uint> pCutMeshFaceIndicesList;
-    string objPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
-    string trepanPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
-    string writetrepanpath = "D:\\Projects\\BooleanDemo\\Resource\\trepan.obj";
-    Transform trepanTransform;
+    List<float> A_VerticesList;
+    List<uint> A_TrianglesList;
+    List<float> B_VerticesList;
+    List<uint> B_TrianglesList;
 
-    string trepanName = "Trepan_";
-    int trepanIndex = 0;
+    string objAPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
+    string ObjBPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
+    string writeNewBPath = "D:\\Projects\\BooleanDemo\\Resource\\trepan.obj";
+    Transform UnityBTransform;
+
+    string BName = "B_";
+    int BIndex = 0;
     #endregion
 
     #region C++ Dll Import
@@ -58,102 +64,95 @@ public class UnityObjBool : MonoBehaviour
 
     #endregion
 
+    /// <summary>
+    /// Init the A and B Mesh data
+    /// </summary>
     void Start()
     {
-        #region init
 
-        obj = new Obj();
-        trepan = new Obj();
-        obj.LoadObj(objPath);
-        trepan.LoadObj(trepanPath);
+        #region Init
 
-        pSrcVerticesList = new List<float>();
-        pSrcMeshFaceIndicesList = new List<uint>();
-        pCutMeshVerticesList = new List<float>();
-        pCutMeshFaceIndicesList = new List<uint>();
+        obj_A = new Obj();
+        obj_A.LoadObj(objAPath);
+        A_VerticesList = new List<float>();
+        A_TrianglesList = new List<uint>();
 
-        trepanTransform = GameObject.Find("Trepan(Unity)").GetComponent<Transform>();
+        obj_B = new Obj();
+        obj_B.LoadObj(ObjBPath);
+        B_VerticesList = new List<float>();
+        B_TrianglesList = new List<uint>();
+
+        UnityBTransform = GameObject.Find("B_Unity").GetComponent<Transform>();
 
         #endregion
 
-        #region SrcMesh data
-        //float[] pSrcMeshVertices
-        for (int i = 0; i < (uint)obj.VertexList.Count; i++)
+        #region A Mesh data
+        for (int i = 0; i < (uint)obj_A.VertexList.Count; i++)
         {
-            pSrcVerticesList.Add((float)obj.VertexList[i].X);
-            pSrcVerticesList.Add((float)obj.VertexList[i].Y);
-            pSrcVerticesList.Add((float)obj.VertexList[i].Z);
+            A_VerticesList.Add((float)obj_A.VertexList[i].X);
+            A_VerticesList.Add((float)obj_A.VertexList[i].Y);
+            A_VerticesList.Add((float)obj_A.VertexList[i].Z);
         }
-        pSrcMeshVertices = pSrcVerticesList.ToArray();
-        //uint[] pSrcMeshFaceIndices      
-        for (int i = 0; i < (uint)obj.FaceList.Count; i++)
+        A_VerticesArray = A_VerticesList.ToArray();
+        for (int i = 0; i < (uint)obj_A.FaceList.Count; i++)
         {
-            int[] intArray = obj.FaceList[i].VertexIndexList;
+            int[] intArray = obj_A.FaceList[i].VertexIndexList;
             uint[] uintArray = intArray.Select(j => (uint)j - 1).ToArray();
-            pSrcMeshFaceIndicesList.AddRange(uintArray);
+            A_TrianglesList.AddRange(uintArray);
         }
-        pSrcMeshFaceIndices = pSrcMeshFaceIndicesList.ToArray();
+        A_TrianglesArray = A_TrianglesList.ToArray();
+        A_VerticesSize = (uint)obj_A.VertexList.Count;
+        A_TrianglesSize = (uint)obj_A.FaceList.Count;
 
-        //uint numCutMeshVertices
-        numSrcMeshVertices = (uint)obj.VertexList.Count;
-        //uint numSrcMeshFaces
-        numSrcMeshFaces = (uint)obj.FaceList.Count;
-
-        Common.GenerateMesh(pSrcMeshVertices, pSrcMeshFaceIndices, "L5(objfromfile)", Color.red);
-
-
+        Common.GenerateMesh(A_VerticesArray, A_TrianglesArray, "A_obj", Color.red);
         #endregion
 
-        #region CutMesh data
-        //float[] pCutMeshVertices
-        for (int i = 0; i < (uint)trepan.VertexList.Count; i++)
+        #region B Mesh data
+        for (int i = 0; i < (uint)obj_B.VertexList.Count; i++)
         {
-            pCutMeshVerticesList.Add((float)trepan.VertexList[i].X);
-            pCutMeshVerticesList.Add((float)trepan.VertexList[i].Y);
-            pCutMeshVerticesList.Add((float)trepan.VertexList[i].Z);
+            B_VerticesList.Add((float)obj_B.VertexList[i].X);
+            B_VerticesList.Add((float)obj_B.VertexList[i].Y);
+            B_VerticesList.Add((float)obj_B.VertexList[i].Z);
         }
-        pCutMeshVertices = pCutMeshVerticesList.ToArray();
-        //uint[] pCutMeshFaceIndices
-        for (int i = 0; i < (uint)trepan.FaceList.Count; i++)
+        B_VerticesArray = B_VerticesList.ToArray();
+        for (int i = 0; i < (uint)obj_B.FaceList.Count; i++)
         {
-            int[] intArray = trepan.FaceList[i].VertexIndexList;
+            int[] intArray = obj_B.FaceList[i].VertexIndexList;
             uint[] uintArray = intArray.Select(jvalue => (uint)jvalue - 1).ToArray();
-            pCutMeshFaceIndicesList.AddRange(uintArray);
+            B_TrianglesList.AddRange(uintArray);
         }
-        pCutMeshFaceIndices = pCutMeshFaceIndicesList.ToArray();
-        //uint numCutMeshVertices
-        numCutMeshVertices = (uint)trepan.VertexList.Count;
-        //uint numCutMeshFaces
-        numCutMeshFaces = (uint)trepan.FaceList.Count;
+        B_TrianglesArray = B_TrianglesList.ToArray();
+        B_VerticesSize = (uint)obj_B.VertexList.Count;
+        B_TrianglesSize = (uint)obj_B.FaceList.Count;
 
-        Common.GenerateMesh(pCutMeshVertices, pCutMeshFaceIndices, "originTrepan", Color.red);
+        Common.GenerateMesh(B_VerticesArray, B_TrianglesArray, "B_obj", Color.red);
         #endregion
 
     }
 
     void Update()
     {
+
         #region Matrix4x4
-        Matrix4x4 matrix = Matrix4x4.TRS(trepanTransform.position, trepanTransform.rotation, Vector3.one);
+        Matrix4x4 matrix = Matrix4x4.TRS(UnityBTransform.position, UnityBTransform.rotation, Vector3.one);
 
         matrix.m01 = -matrix.m01;
         matrix.m02 = -matrix.m02;
         matrix.m03 = -matrix.m03;
         matrix.m10 = -matrix.m10;
         matrix.m20 = -matrix.m20;
-
         #endregion
 
-        #region Obtain a new vertex array(float[])
+        #region Obtain a new vertex array(float[]) for B
         ///The mesh vertices of the read object are transformed 
         ///in the same way as the object in the Unity scene 
         ///according to matrix4x4 to obtain a new vertex array(float[])
-        Vector3[] vertices = new Vector3[trepan.VertexList.Count];
-        for (int i = 0; i < trepan.VertexList.Count; i++)
+        Vector3[] vertices = new Vector3[obj_B.VertexList.Count];
+        for (int i = 0; i < obj_B.VertexList.Count; i++)
         {
-            vertices[i].x = (float)trepan.VertexList[i].X;
-            vertices[i].y = (float)trepan.VertexList[i].Y;
-            vertices[i].z = (float)trepan.VertexList[i].Z;
+            vertices[i].x = (float)obj_B.VertexList[i].X;
+            vertices[i].y = (float)obj_B.VertexList[i].Y;
+            vertices[i].z = (float)obj_B.VertexList[i].Z;
         }
         for (int i = 0; i < vertices.Length; i++)
         {
@@ -163,22 +162,39 @@ public class UnityObjBool : MonoBehaviour
         //Then convert to float[]
         for (int i = 0; i < vertices.Length; i++)
         {
-            pCutMeshVertices[i * 3] = vertices[i].x;
-            pCutMeshVertices[i * 3 + 1] = vertices[i].y;
-            pCutMeshVertices[i * 3 + 2] = vertices[i].z;
+            B_VerticesArray[i * 3] = vertices[i].x;
+            B_VerticesArray[i * 3 + 1] = vertices[i].y;
+            B_VerticesArray[i * 3 + 2] = vertices[i].z;
         }
         #endregion
 
-        #region Generate new trepan Mesh and Write its Obj into the file
+        #region Generate new B Mesh and Write B's new Obj into the file
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Common.GenerateMesh(pCutMeshVertices, pCutMeshFaceIndices, trepanName+trepanIndex.ToString(), Color.green);
-            Common.WriteObj(writetrepanpath, pCutMeshVertices,pCutMeshFaceIndices);
-            trepanIndex++;
+            //Generate new B Mesh and Write its Obj into the file
+            Common.GenerateMesh(B_VerticesArray, B_TrianglesArray, BName + BIndex.ToString(), Color.green);
+            Common.WriteObj(writeNewBPath, B_VerticesArray, B_TrianglesArray);
+            BIndex++;
+
+            //Boolean and Write result obj into the file
+            var error = queryInfoNoUVs(A_VerticesArray, A_TrianglesArray, A_VerticesSize, A_TrianglesSize,
+                                       B_VerticesArray, B_TrianglesArray, B_VerticesSize, B_TrianglesSize,
+                                       ref resultVerticesSize, ref resultTrianglesSize);
+            if (error != 0) Debug.Log($"error:{error}");
+
+            resultVerticesOutArray = new float[resultVerticesSize];
+            resultTrianglesOutArray = new int[resultTrianglesSize];
+
+            getBooleanResultNoUVs(resultVerticesOutArray, resultTrianglesOutArray);
+
+            Common.GenerateMesh(resultVerticesOutArray, resultTrianglesOutArray, "C", Color.yellow);
+
         }
         #endregion
 
+
     }
+
 }
 
 #region Discard

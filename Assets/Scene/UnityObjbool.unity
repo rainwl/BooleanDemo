@@ -443,7 +443,7 @@ GameObject:
   - component: {fileID: 1391033729258266328}
   - component: {fileID: 2479315087180282444}
   m_Layer: 0
-  m_Name: Trepan(Unity)
+  m_Name: B_Unity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -461,7 +461,7 @@ GameObject:
   - component: {fileID: 2823090748071428375}
   - component: {fileID: 1587545475464979843}
   m_Layer: 0
-  m_Name: L5(Unity)
+  m_Name: A_Unity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

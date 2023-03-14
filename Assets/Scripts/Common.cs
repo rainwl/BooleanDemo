@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 public class Common 
 {
     /// <summary>
-    /// Generate Mesh from VerticesArray and FaceIndicesArray
+    /// Generate Mesh from VerticesArray and FaceIndicesArray(uint[])
     /// </summary>
     /// <param name="VerticesArray"></param>
     /// <param name="FaceIndicesArray"></param>
@@ -39,6 +39,37 @@ public class Common
         meshFilterresult.mesh = meshresult;
         meshrendererresult.material = materialresult;
     }
+    /// <summary>
+    /// Generate Mesh from VerticesArray and FaceIndicesArray(int[])
+    /// </summary>
+    /// <param name="VerticesArray"></param>
+    /// <param name="FaceIndicesArray"></param>
+    /// <param name="name"></param>
+    /// <param name="meshcolor"></param>
+    public static void GenerateMesh(float[] VerticesArray, int[] FaceIndicesArray, string name, Color meshcolor)
+    {
+        Vector3[] vectorArrayresult = new Vector3[VerticesArray.Length / 3];
+        for (int i = 0; i < vectorArrayresult.Length; i++)
+        {
+            int j = i * 3;
+            vectorArrayresult[i] = new Vector3(VerticesArray[j], VerticesArray[j + 1], VerticesArray[j + 2]);
+        }
+        Mesh meshresult = new Mesh();
+        meshresult.vertices = vectorArrayresult;
+        meshresult.triangles = FaceIndicesArray;
+        meshresult.RecalculateNormals();
+
+        GameObject result = new GameObject();
+        result.name = name;
+        MeshFilter meshFilterresult = result.AddComponent<MeshFilter>();
+        MeshRenderer meshrendererresult = result.AddComponent<MeshRenderer>();
+        Material materialresult = new Material(Shader.Find("Standard"));
+        materialresult.color = meshcolor;
+        meshFilterresult.mesh = meshresult;
+        meshrendererresult.material = materialresult;
+    }
+    
+    
     /// <summary>
     /// Write Float[] into Obj
     /// </summary>
@@ -72,6 +103,12 @@ public class Common
         }
     }
 
+    /// <summary>
+    /// According to Float and Uint Array,write the obj 
+    /// </summary>
+    /// <param name="writeobjpath"></param>
+    /// <param name="VerticesArray"></param>
+    /// <param name="TrianlgesArray"></param>
     public static void WriteObj(string writeobjpath, float[] VerticesArray, uint[] TrianlgesArray)
     {
         using (StreamWriter writer = new StreamWriter(writeobjpath))

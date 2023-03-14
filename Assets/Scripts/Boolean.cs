@@ -290,12 +290,14 @@ public class Boolean : MonoBehaviour
             GameObject go = GameObject.Find("HJ(L-coor.)");
             Mesh mesh = go.GetComponent<MeshFilter>().mesh;
             Transform transform = go.GetComponent<Transform>();
-            //Dr.Yue
-            Transform t2 = null;
-            var pos = transform.position;
-            var rot = transform.rotation.eulerAngles;
-            t2.position = new Vector3(-pos.x, pos.y, pos.z);
-            t2.rotation = Quaternion.Euler(rot[0], -rot[1], -rot[2]);
+            
+            ////Dr.Yue
+            //Transform t2 = null;
+            //var pos = transform.position;
+            //var rot = transform.rotation.eulerAngles;
+            //t2.position = new Vector3(-pos.x, pos.y, pos.z);
+            //t2.rotation = Quaternion.Euler(rot[0], -rot[1], -rot[2]);
+            
             Vector3[] vertices = mesh.vertices;
             //t2.TransformPoint();//vertices reading from files
             ///Convert to right-hand coordinate system
@@ -306,7 +308,7 @@ public class Boolean : MonoBehaviour
             //}
             for (int i = 0; i < vertices.Length; i++)
             {
-                vertices[i] = t2.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
+                vertices[i] = transform.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
             }
 
             float[] verticesArray = new float[vertices.Length * 3];
