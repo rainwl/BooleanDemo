@@ -42,9 +42,11 @@ public class Boolean : MonoBehaviour
     List<uint> pCutMeshFaceIndicesList;
 
     //ObjParser Write Path
-    string objPath = "D:\\Projects\\BooleanDemo\\Resource\\srcout2.obj";
-    string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\cutout2.obj";
+    string objPath = "D:\\Projects\\BooleanDemo\\Resource\\L5.obj";
+    string hjPath = "D:\\Projects\\BooleanDemo\\Resource\\HJ.obj";
 
+    string result = "result_";
+    int index = 0;
 
 
     #endregion
@@ -62,7 +64,7 @@ public class Boolean : MonoBehaviour
 
     #endregion
 
-    #region Implement
+
     void Start()
     {
         #region Init
@@ -128,8 +130,8 @@ public class Boolean : MonoBehaviour
         #endregion
 
         #region MeshVisual
-        GenerateMesh(pSrcMeshVertices, pSrcMeshFaceIndices, "src", Color.blue);
-        GenerateMesh(pCutMeshVertices, pCutMeshFaceIndices, "cut", Color.green);
+        GenerateMesh(pSrcMeshVertices, pSrcMeshFaceIndices, "L5", Color.green);
+        GenerateMesh(pCutMeshVertices, pCutMeshFaceIndices, "HJ", Color.green);
         #endregion
 
         #region output
@@ -185,18 +187,19 @@ public class Boolean : MonoBehaviour
 
         //Visual Result
         resultTrianglesOut = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
-        GenerateMesh(resultVerticesOut, resultTrianglesOut, "result", Color.yellow);
+        GenerateMesh(resultVerticesOut, resultTrianglesOut, result + index.ToString(), Color.yellow);
 
         #endregion
 
         #region WriteObj
-        string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\generate.obj";
+        string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\" + result + index.ToString() + ".obj";
 
         using (StreamWriter writer = new StreamWriter(writeobjpath))
         {
             WriteFloatArrayToStream(resultVerticesOut, writer);
             WriteIntArrayToStream(resultFaceIndicesOut, writer);
         }
+        index++;
         #endregion
 
     }
@@ -283,19 +286,27 @@ public class Boolean : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             #region NewPos
-            GameObject go = GameObject.Find("cut");
+            //这里有问题,用Unity的mesh做bool有问题,单独验证一下
+            GameObject go = GameObject.Find("HJ(L-coor.)");
             Mesh mesh = go.GetComponent<MeshFilter>().mesh;
             Transform transform = go.GetComponent<Transform>();
+            //Dr.Yue
+            Transform t2 = null;
+            var pos = transform.position;
+            var rot = transform.rotation.eulerAngles;
+            t2.position = new Vector3(-pos.x, pos.y, pos.z);
+            t2.rotation = Quaternion.Euler(rot[0], -rot[1], -rot[2]);
             Vector3[] vertices = mesh.vertices;
+            //t2.TransformPoint();//vertices reading from files
             ///Convert to right-hand coordinate system
             //for (int i = 0; i < vertices.Length; i++)
             //{
             //    // Multiply the X coordinate by - 1 and rotate
-            //    vertices[i] = transform.TransformPoint(new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z));              
+            //    vertices[i] = transform.TransformPoint(new Vector3(-vertices[i].x, vertices[i].y, vertices[i].z));
             //}
             for (int i = 0; i < vertices.Length; i++)
             {
-                vertices[i] = transform.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
+                vertices[i] = t2.TransformPoint(new Vector3(vertices[i].x, vertices[i].y, vertices[i].z));
             }
 
             float[] verticesArray = new float[vertices.Length * 3];
@@ -315,6 +326,7 @@ public class Boolean : MonoBehaviour
             //    triangles[i + 1] = triangles[i + 2];
             //    triangles[i + 2] = temp;
             //}
+
             uint[] uinttriArray = triangles.Select(i => (uint)i).ToArray();
 
             uint vertexCount = (uint)mesh.vertexCount;
@@ -353,19 +365,23 @@ public class Boolean : MonoBehaviour
             resultTrianglesOut = resultFaceIndicesOut.Select(i => (uint)i).ToArray();
             GenerateMesh(resultVerticesOut, resultTrianglesOut, "new result", Color.red);
 
-            string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\result.obj";
+            //string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\result.obj";
+            string writeobjpath = "D:\\Projects\\BooleanDemo\\Resource\\" + result + index.ToString() + ".obj";
 
             using (StreamWriter writer = new StreamWriter(writeobjpath))
             {
                 WriteFloatArrayToStream(resultVerticesOut, writer);
                 WriteIntArrayToStream(resultFaceIndicesOut, writer);
             }
-
+            index++;
             #endregion
 
         }
         #endregion
     }
+
+
+    #region Implement
 
     /// <summary>
     /// Write Float[] into Obj
