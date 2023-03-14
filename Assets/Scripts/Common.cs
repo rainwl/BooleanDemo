@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class Common 
+public class Common
 {
     /// <summary>
     /// Generate Mesh from VerticesArray and FaceIndicesArray(uint[])
@@ -68,8 +68,8 @@ public class Common
         meshFilterresult.mesh = meshresult;
         meshrendererresult.material = materialresult;
     }
-    
-    
+
+
     /// <summary>
     /// Write Float[] into Obj
     /// </summary>
@@ -86,7 +86,7 @@ public class Common
         }
     }
     /// <summary>
-    /// Write int[] into Obj
+    /// Write uint[] into Obj
     /// </summary>
     /// <param name="array"></param>
     /// <param name="sw"></param>
@@ -102,6 +102,24 @@ public class Common
 
         }
     }
+    /// <summary>
+    /// Write int[] into Obj
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="sw"></param>
+    public static void WriteIntArrayToStream(int[] array, StreamWriter sw)
+    {
+
+        for (int i = 0; i < array.Length; i += 3)
+        {
+            if (i + 2 < array.Length)
+            {
+                sw.WriteLine("f {0} {1} {2} ", array[i] + 1, array[i + 1] + 1, array[i + 2] + 1);
+            }
+
+        }
+    }
+
 
     /// <summary>
     /// According to Float and Uint Array,write the obj 
@@ -115,6 +133,15 @@ public class Common
         {
             WriteFloatArrayToStream(VerticesArray, writer);
             WriteUintArrayToStream(TrianlgesArray, writer);
-        }       
+        }
+    }
+    public static void WriteObj(string writeobjpath, float[] VerticesArray, int[] TrianlgesArray)
+    {
+
+        using (StreamWriter writer = new StreamWriter(writeobjpath))
+        {
+            WriteFloatArrayToStream(VerticesArray, writer);
+            WriteIntArrayToStream(TrianlgesArray, writer);
+        }
     }
 }
