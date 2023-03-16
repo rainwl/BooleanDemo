@@ -123,8 +123,8 @@ public class DoubleBool : MonoBehaviour
         #region B Mesh data
         for (int i = 0; i < (uint)obj_B.VertexList.Count; i++)
         {
-            B_VerticesList.Add((float)obj_B.VertexList[i].X);
-            B_VerticesList.Add((float)obj_B.VertexList[i].Y);
+            B_VerticesList.Add((float)obj_B.VertexList[i].X );
+            B_VerticesList.Add((float)obj_B.VertexList[i].Y );
             B_VerticesList.Add((float)obj_B.VertexList[i].Z);
         }
         B_VerticesArray = B_VerticesList.ToArray();
