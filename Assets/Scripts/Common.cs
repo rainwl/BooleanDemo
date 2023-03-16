@@ -39,6 +39,7 @@ public class Common
         meshFilterresult.mesh = meshresult;
         meshrendererresult.material = materialresult;
     }
+
     /// <summary>
     /// Generate Mesh from VerticesArray and FaceIndicesArray(int[])
     /// </summary>
@@ -69,7 +70,6 @@ public class Common
         meshrendererresult.material = materialresult;
     }
 
-
     /// <summary>
     /// Write Float[] into Obj
     /// </summary>
@@ -85,6 +85,7 @@ public class Common
             }
         }
     }
+
     /// <summary>
     /// Write uint[] into Obj
     /// </summary>
@@ -120,7 +121,6 @@ public class Common
         }
     }
 
-
     /// <summary>
     /// According to Float and Uint Array,write the obj 
     /// </summary>
@@ -135,6 +135,12 @@ public class Common
             WriteUintArrayToStream(TrianlgesArray, writer);
         }
     }
+    /// <summary>
+    /// According to Float and Int Array,write the obj 
+    /// </summary>
+    /// <param name="writeobjpath"></param>
+    /// <param name="VerticesArray"></param>
+    /// <param name="TrianlgesArray"></param>
     public static void WriteObj(string writeobjpath, float[] VerticesArray, int[] TrianlgesArray)
     {
 
